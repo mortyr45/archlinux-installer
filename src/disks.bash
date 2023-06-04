@@ -26,14 +26,14 @@ function prompt_partition_choice() {
     echo "$result"
 }
 
-declare luks_encryption
-luks_encryption=false
-if whiptail --yesno --defaultno "Would you like to encrypt the root partition?" $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH; then luks_encryption=true; fi
-
 declare efi_partition
 efi_partition=$(prompt_partition_choice "EFI partition:")
 declare root_partition
 root_partition=$(prompt_partition_choice "Root partition:")
+
+declare luks_encryption
+luks_encryption=false
+if whiptail --yesno --defaultno "Would you like to encrypt the root partition?" $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH; then luks_encryption=true; fi
 
 whiptail --yesno --defaultno "Format the following partitions?:\n
 $efi_partition (vfat)\n
