@@ -63,7 +63,7 @@ function prompt_additional_features() {
 
 function base_install() {
     set -euo pipefail
-    pacstrap -G -K -M /mnt $1
+    pacstrap -G -K /mnt $1
     genfstab -U /mnt >/mnt/etc/fstab
 }
 
