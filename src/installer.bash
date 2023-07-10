@@ -180,6 +180,7 @@ default_uki=\"/boot/efi/EFI/Linux/$kernel_name.efi\"
 function enable_services() {
     set -euo pipefail
     arch-chroot /mnt systemctl enable systemd-{boot-update,timesyncd,oomd,resolved,networkd}.service
+    arch-chroot /mnt systemctl enable serial-getty@ttyS0.service
 }
 
 ###############################
