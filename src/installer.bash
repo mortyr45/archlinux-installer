@@ -129,29 +129,8 @@ beep false
 " > /mnt/boot/efi/loader/loader.conf
 }
 
-function configure_mkinitcpio() {
+function configure_dracut() {
     set -euo pipefail
-    rm /mnt/boot/initramfs-*
-    declare presets
-    presets=$(ls /mnt/etc/mkinitcpio.d/*.preset)
-    for preset_file in $presets; do
-        preset_file=$(basename "$preset_file")
-        kernel_name=$(echo "$preset_file" | cut -d'.' -f1)
-        mv "/mnt/etc/mkinitcpio.d/$preset_file" "/mnt/etc/mkinitcpio.d/$preset_file.original"
-
-        echo "FILES=()
-HOOKS=(systemd modconf keyboard sd-vconsole block filesystems sd-encrypt)
-COMPRESSION=\"zstd\"
-" > "/mnt/etc/mkinitcpio.d/$kernel_name.conf"
-
-        echo "PRESETS=('default')
-default_config=\"/etc/mkinitcpio.d/$kernel_name.conf\"
-default_kver=\"/boot/vmlinuz-$kernel_name\"
-default_microcode=\"/boot/*-ucode.img\"
-default_uki=\"/boot/efi/EFI/Linux/$kernel_name.efi\"
-" > "/mnt/etc/mkinitcpio.d/$preset_file"
-    done
-
     declare luks_root_exists
     luks_root_exists=false
     grep "/dev/mapper/luks_root" /etc/mtab && luks_root_exists=true
@@ -170,11 +149,26 @@ default_uki=\"/boot/efi/EFI/Linux/$kernel_name.efi\"
                 done
             done
         done
-        echo "rd.luks.name=$luks_uuid=luks_root root=/dev/mapper/luks_root rootflags=subvol=@ rw quiet" > /mnt/etc/kernel/cmdline
+        echo "kernel_cmdline=\"rd.luks.uuid=$luks_uuid root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
     else
-        echo "root=UUID=$root_uuid rootflags=subvol=@ rw quiet" > /mnt/etc/kernel/cmdline
+        echo "kernel_cmdline=\"root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
     fi
-    arch-chroot /mnt mkinitcpio -P
+
+    echo "compress=\"zstd\"" > /mnt/etc/dracut.conf.d/compress.conf
+    arch-chroot /mnt dracut --regenerate-all --uefi --force
+
+    mkdir -p /mnt/etc/pacman.d/hooks
+    echo "[Trigger]
+Operation = Upgrade
+Operation = Install
+Type = Package
+Target = linux*
+
+[Action]
+Depends = dracut
+Description = Regenerating unified kernel images...
+When = PostTransaction
+Exec = /usr/bin/dracut --regenerate-all --uefi --force" > /mnt/etc/pacman.d/hooks/dracut_uki.hook
 }
 
 function enable_services() {
@@ -251,7 +245,7 @@ declare additional_features
 additional_features=$(prompt_additional_features)
 
 declare packages
-packages="base btrfs-progs dkms efibootmgr iptables-nft linux-firmware mkinitcpio nano pacman-contrib sudo systemd-resolvconf ufw"
+packages="base btrfs-progs dkms dracut efibootmgr iptables-nft linux-firmware nano pacman-contrib sudo systemd-resolvconf ufw"
 for kernel in $(echo "$kernel_choices" | xargs); do
     packages+=" $kernel $kernel-headers"
 done
@@ -269,7 +263,7 @@ locale_setup
 set_hostname "$hostname"
 configure_network
 configure_systemd_bootloader
-configure_mkinitcpio
+configure_dracut
 enable_services
 
 [[ "$additional_features" == *"snapper"* ]] && setup_snapper
