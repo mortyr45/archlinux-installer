@@ -277,3 +277,5 @@ enable_services
 [[ "$additional_features" == *"iwd"* ]] && setup_iwd
 [[ "$additional_features" == *"linger"* ]] && setup_linger "$username"
 [[ "$additional_features" == *"bluetooth"* ]] && setup_bluetooth
+
+echo "Installation done!"
