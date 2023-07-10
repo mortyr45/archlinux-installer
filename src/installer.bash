@@ -82,9 +82,10 @@ function locale_setup() {
     arch-chroot /mnt sed -ri -e "s/^#en_US.UTF-8\ UTF-8/en_US.UTF-8\ UTF-8/g" /etc/locale.gen
     arch-chroot /mnt locale-gen
     echo "KEYMAP=us-acentos" >/mnt/etc/vconsole.conf
-    echo "LANG=en_US.UTF-8" >/mnt/etc/locale.conf
-    echo "LANGUAGE=en_US.UTF-8" >/mnt/etc/locale.conf
-    echo "LC_ALL=en_US.UTF-8" >/mnt/etc/locale.conf
+    echo "LANG=en_US.UTF-8
+LANGUAGE=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+LC_COLLATE=en_US.UTF-8" > /mnt/etc/locale.conf
     ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
 }
 
