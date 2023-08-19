@@ -114,7 +114,7 @@ DHCP=yes
 
     arch-chroot /mnt ufw default deny incoming
     arch-chroot /mnt ufw default allow outgoing
-    arch-chroot /mnt ufw default allow routed
+    arch-chroot /mnt ufw default deny routed
 }
 
 function configure_systemd_bootloader() {
@@ -128,6 +128,16 @@ auto-entries true
 auto-firmware true
 beep false
 " > /mnt/boot/efi/loader/loader.conf
+    mkdir -p /mnt/etc/pacman.d/hooks
+    echo "[Trigger]
+Operation = Upgrade
+Type = Package
+Target = systemd
+
+[Action]
+Description = Updating systemd bootloader...
+When = PostTransaction
+Exec = bootctl --no-variables --graceful update" > /mnt/etc/pacman.d/hooks/update_systemd_bootloader.hook
 }
 
 function configure_dracut() {
@@ -169,12 +179,12 @@ Target = linux*
 Depends = dracut
 Description = Regenerating unified kernel images...
 When = PostTransaction
-Exec = /usr/bin/dracut --regenerate-all --uefi --force" > /mnt/etc/pacman.d/hooks/dracut_uki.hook
+Exec = /usr/bin/dracut --regenerate-all --uefi --force" > /mnt/etc/pacman.d/hooks/dracut_generate_ukis.hook
 }
 
 function enable_services() {
     set -euo pipefail
-    arch-chroot /mnt systemctl enable systemd-{boot-update,timesyncd,oomd,resolved,networkd}.service
+    arch-chroot /mnt systemctl enable systemd-{timesyncd,oomd,resolved,networkd}.service
     arch-chroot /mnt systemctl enable serial-getty@ttyS0.service
 }
 
@@ -274,3 +284,6 @@ enable_services
 [[ "$additional_features" == *"bluetooth"* ]] && setup_bluetooth
 
 echo "Installation done!"
+
+# gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+# gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
