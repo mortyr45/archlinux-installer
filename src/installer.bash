@@ -106,7 +106,7 @@ DNS=1.1.1.1#one.one.one.one
     ln -sf /run/systemd/resolve/stub-resolv.conf /mnt/etc/resolv.conf
 
     echo "[Match]
-Name=!veth*
+Name=*
 
 [Network]
 DHCP=yes
