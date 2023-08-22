@@ -256,7 +256,7 @@ declare additional_features
 additional_features=$(prompt_additional_features)
 
 declare packages
-packages="base btrfs-progs dkms dracut efibootmgr iptables-nft linux-firmware nano pacman-contrib sudo systemd-resolvconf ufw"
+packages="base btrfs-progs dkms dracut efibootmgr iptables-nft linux-firmware nano pacman-contrib sudo systemd-resolvconf ufw wget"
 for kernel in $(echo "$kernel_choices" | xargs); do
     packages+=" $kernel $kernel-headers"
 done
