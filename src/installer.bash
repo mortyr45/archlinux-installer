@@ -99,7 +99,7 @@ function configure_network() {
     mkdir -p /mnt/etc/systemd/resolved.conf.d
     echo "[Resolve]
 DNSSEC=allow-downgrade
-DNSOverTLS=yes
+DNSOverTLS=opportunistic
 DNS=1.1.1.1#one.one.one.one
 " >/mnt/etc/systemd/resolved.conf.d/50_default.conf
 
