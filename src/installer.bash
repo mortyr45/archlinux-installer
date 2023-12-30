@@ -165,7 +165,7 @@ function configure_dracut() {
         echo "kernel_cmdline=\"root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
     fi
 
-    echo "omit_dracutmodules=\" brltty\"" > /mnt/etc/dracut.conf.d/omit_modules.conf
+    echo "omit_dracutmodules=\" brltty \"" > /mnt/etc/dracut.conf.d/omit_modules.conf
     echo "compress=\"zstd\"" > /mnt/etc/dracut.conf.d/compress.conf
     arch-chroot /mnt dracut --regenerate-all --uefi --force
 

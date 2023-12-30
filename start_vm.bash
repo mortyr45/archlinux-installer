@@ -18,7 +18,7 @@ qemu-system-x86_64 \
 -drive file=$workdir/disk.img,index=0,media=disk,format=raw \
 -drive file=~/Downloads/archlinux-x86_64.iso,index=1,media=cdrom \
 -virtfs local,path=src,mount_tag=src,security_model=mapped-xattr,readonly=on \
--device virtio-vga-gl \
+#-device virtio-vga-gl \
 -display gtk,gl=on
 
 # mount the share with: mount --mkdir -t 9p src /src
