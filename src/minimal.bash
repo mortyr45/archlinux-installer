@@ -45,8 +45,6 @@ function prompt_hostname() {
     echo "$hostname"
 }
 
-
-
 timedatectl
 pacman -Sy --noconfirm jq
 
@@ -71,7 +69,7 @@ hostname=$(prompt_hostname)
 declare additional_features
 
 #binutils needed
-pacstrap -G -K /mnt binutils dracut efibootmgr linux linux-firmware pacman sudo systemd-resolvconf wheel
+pacstrap -G -K /mnt archlinux-keyring binutils dracut efibootmgr iproute2 linux linux-firmware pacman sudo systemd-resolvconf
 genfstab -U /mnt >/mnt/etc/fstab
 echo "$hostname" >/mnt/etc/hostname
 
@@ -82,6 +80,16 @@ arch-chroot /mnt useradd --add-subids-for-system --create-home --groups wheel --
 echo "$username:$password" | arch-chroot /mnt chpasswd
 arch-chroot /mnt passwd --lock root
 
+arch-chroot /mnt systemctl enable systemd-{timesyncd,oomd,resolved,networkd}.service
+arch-chroot /mnt systemctl enable serial-getty@ttyS0.service
+
+echo "[Match]
+Name=*
+
+[Network]
+DHCP=yes
+" > /mnt/etc/systemd/network/50_dhcp.network
+
 arch-chroot /mnt bootctl install
     echo "default @saved
 timeout 3
@@ -91,8 +99,8 @@ auto-entries true
 auto-firmware true
 beep false
 " > /mnt/boot/efi/loader/loader.conf
-    mkdir -p /mnt/etc/pacman.d/hooks
-    echo "[Trigger]
+mkdir -p /mnt/etc/pacman.d/hooks
+echo "[Trigger]
 Operation = Upgrade
 Type = Package
 Target = systemd
@@ -103,34 +111,34 @@ When = PostTransaction
 Exec = bootctl --no-variables --graceful update" > /mnt/etc/pacman.d/hooks/update_systemd_bootloader.hook
 
 declare luks_root_exists
-    luks_root_exists=false
-    grep "/dev/mapper/luks_root" /etc/mtab && luks_root_exists=true
-    if [ $luks_root_exists == true ]; then
-        declare luks_uuid
-        readarray -t device_array < <(lsblk --fs --json | jq '.blockdevices' | jq -rc '.[]')
-        for device in "${device_array[@]}"; do
-            readarray -t partition_array < <(echo "$device" | jq '.children' | jq -rc '.[]')
-            for partition in "${partition_array[@]}"; do
-                readarray -t mapper_array < <(echo "$partition" | jq '.children' | jq -rc '.[]')
-                for mapper in "${mapper_array[@]}"; do
-                    if [ $(echo "$mapper" | jq -r '.name') == "luks_root" ]; then
-                        luks_uuid=$(echo "$partition" | jq -r '.uuid')
-                        break 3
-                    fi
-                done
+luks_root_exists=false
+grep "/dev/mapper/luks_root" /etc/mtab && luks_root_exists=true
+if [ $luks_root_exists == true ]; then
+    declare luks_uuid
+    readarray -t device_array < <(lsblk --fs --json | jq '.blockdevices' | jq -rc '.[]')
+    for device in "${device_array[@]}"; do
+        readarray -t partition_array < <(echo "$device" | jq '.children' | jq -rc '.[]')
+        for partition in "${partition_array[@]}"; do
+            readarray -t mapper_array < <(echo "$partition" | jq '.children' | jq -rc '.[]')
+            for mapper in "${mapper_array[@]}"; do
+                if [ $(echo "$mapper" | jq -r '.name') == "luks_root" ]; then
+                    luks_uuid=$(echo "$partition" | jq -r '.uuid')
+                    break 3
+                fi
             done
         done
-        echo "kernel_cmdline=\"rd.luks.uuid=$luks_uuid root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
-    else
-        echo "kernel_cmdline=\"root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
-    fi
+    done
+    echo "kernel_cmdline=\"rd.luks.uuid=$luks_uuid root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
+else
+    echo "kernel_cmdline=\"root=UUID=$root_uuid rootflags=subvol=@ rw quiet\"" > /mnt/etc/dracut.conf.d/cmdline.conf
+fi
 
-    echo "omit_dracutmodules=\" brltty\"" > /mnt/etc/dracut.conf.d/omit_modules.conf
-    echo "compress=\"zstd\"" > /mnt/etc/dracut.conf.d/compress.conf
-    arch-chroot /mnt dracut --regenerate-all --uefi --force
+echo "omit_dracutmodules=\" brltty\"" > /mnt/etc/dracut.conf.d/omit_modules.conf
+echo "compress=\"zstd\"" > /mnt/etc/dracut.conf.d/compress.conf
+arch-chroot /mnt dracut --regenerate-all --uefi --force
 
-    mkdir -p /mnt/etc/pacman.d/hooks
-    echo "[Trigger]
+mkdir -p /mnt/etc/pacman.d/hooks
+echo "[Trigger]
 Operation = Upgrade
 Operation = Install
 Type = Package
