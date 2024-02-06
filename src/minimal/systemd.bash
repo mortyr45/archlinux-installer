@@ -8,42 +8,9 @@ export WHIPTAIL_HEIGHT=20
 export WHIPTAIL_WIDTH=78
 export WHIPTAIL_LIST_HEIGHT=10
 export WHIPTAIL_CANCEL_MESSAGE="Cancelled by the user."
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-###############################
-# Prompts
-###############################
-
-function prompt_kernels() {
-    set -euo pipefail
-    declare chosen_kernels
-    chosen_kernels=$(whiptail --notags --checklist "Choose kernel(s) to install:" $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH $WHIPTAIL_LIST_HEIGHT \
-        "linux" "Latest stable linux kernel" ON \
-        "linux-lts" "Long-term support linux kernel" OFF \
-        "linux-hardened" "Hardened linux kernel" OFF \
-        "linux-zen" "Zen linux kernel" OFF 3>&1 1>&2 2>&3)
-    echo "$chosen_kernels"
-}
-
-function prompt_username() {
-    set -euo pipefail
-    declare username
-    username=$(whiptail --inputbox "Please provide a username for the new user:" $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH 3>&1 1>&2 2>&3)
-    echo "$username"
-}
-
-function prompt_password() {
-    set -euo pipefail
-    declare user_password
-    user_password=$(whiptail --passwordbox "Please provide a password for the new user:" $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH 3>&1 1>&2 2>&3)
-    echo "$user_password"
-}
-
-function prompt_hostname() {
-    set -euo pipefail
-    declare hostname
-    hostname=$(whiptail --inputbox "Please provide a hostname for the new system:" $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH 3>&1 1>&2 2>&3)
-    echo "$hostname"
-}
+source $SCRIPT_DIR/_prompts.bash
 
 timedatectl
 pacman -Sy --noconfirm jq
@@ -68,8 +35,13 @@ declare hostname
 hostname=$(prompt_hostname)
 declare additional_features
 
+declare packages
+packages="archlinux-keyring binutils dracut efibootmgr iproute2 linux-firmware pacman sudo systemd systemd-resolvconf"
+for kernel in $(echo "$kernel_choices" | xargs); do
+    packages+=" $kernel $kernel-headers"
+done
 #binutils needed
-pacstrap -G -K /mnt archlinux-keyring binutils dracut efibootmgr iproute2 linux linux-firmware pacman sudo systemd-resolvconf
+pacstrap -G -K /mnt $packages
 genfstab -U /mnt >/mnt/etc/fstab
 echo "$hostname" >/mnt/etc/hostname
 
@@ -82,6 +54,19 @@ arch-chroot /mnt passwd --lock root
 
 arch-chroot /mnt systemctl enable systemd-{timesyncd,oomd,resolved,networkd}.service
 arch-chroot /mnt systemctl enable serial-getty@ttyS0.service
+
+mkdir -p /mnt/etc/pacman.d/hooks
+echo "[Trigger]
+Operation = Upgrade
+Operation = Install
+Type = Package
+Target = linux*
+
+[Action]
+Depends = dracut
+Description = Regenerating unified kernel images...
+When = PostTransaction
+Exec = /usr/bin/dracut --regenerate-all --uefi --force" > /mnt/etc/pacman.d/hooks/dracut_generate_ukis.hook
 
 echo "[Match]
 Name=*
@@ -136,16 +121,3 @@ fi
 echo "omit_dracutmodules=\" brltty\"" > /mnt/etc/dracut.conf.d/omit_modules.conf
 echo "compress=\"zstd\"" > /mnt/etc/dracut.conf.d/compress.conf
 arch-chroot /mnt dracut --regenerate-all --uefi --force
-
-mkdir -p /mnt/etc/pacman.d/hooks
-echo "[Trigger]
-Operation = Upgrade
-Operation = Install
-Type = Package
-Target = linux*
-
-[Action]
-Depends = dracut
-Description = Regenerating unified kernel images...
-When = PostTransaction
-Exec = /usr/bin/dracut --regenerate-all --uefi --force" > /mnt/etc/pacman.d/hooks/dracut_generate_ukis.hook
