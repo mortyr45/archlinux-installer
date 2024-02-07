@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# This script will install Archlinux on your system.
-
 set -euo pipefail
 
 ###############################
 # Prompts
 ###############################
+# needs: whiptail
 
 function prompt_kernels() {
     set -euo pipefail

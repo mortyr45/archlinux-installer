@@ -1,3 +1,5 @@
+**Under heavy rework! PLS do not use ATM!**
+
 Archlinux install script
 ===
 
