@@ -75,3 +75,10 @@ After the script finished, the installed system represents my ideal default conf
 bash <(curl -sL https://raw.githubusercontent.com/mortyr45/archlinux-installer/master/src/disks.bash)
 bash <(curl -sL https://raw.githubusercontent.com/mortyr45/archlinux-installer/master/src/installer.bash)
 ```
+
+### 4. If you want to boot your kernel directly
+
+Replace parts appropriately:
+```bash
+efibootmgr --create --disk /dev/sda --part 1 --label "Arch Linux ($kernel)" --loader "\\$kernel.efi" --unicode
+```

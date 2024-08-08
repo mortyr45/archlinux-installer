@@ -24,5 +24,6 @@ qemu-system-x86_64 \
 # -netdev user,id=net0,hostfwd=tcp::9090-:9090 \
 # -nic user,net=192.168.200.0/24 \
 #-device virtio-vga-gl \
+#-nographic -serial tcp:127.0.0.1:1234,server=on,wait=off -monitor none
 
 # mount the share with: mount --mkdir -t 9p src /src
