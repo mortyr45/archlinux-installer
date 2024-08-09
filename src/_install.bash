@@ -37,7 +37,7 @@ if [ $luks_root_exists == true ]; then
             done
         done
     done
-    echo "rd.luks.uuid=$luks_uuid root=UUID=$root_uuid rootflags=subvol=@ rw" > /mnt/etc/kernel/cmdline
+    echo "rd.luks.uuid=$luks_uuid root=UUID=$root_uuid rootflags=subvol=@ rw ipv6.disable=1" > /mnt/etc/kernel/cmdline
 else
-    echo "root=UUID=$root_uuid rootflags=subvol=@ rw" > /mnt/etc/kernel/cmdline
+    echo "root=UUID=$root_uuid rootflags=subvol=@ rw ipv6.disable=1" > /mnt/etc/kernel/cmdline
 fi
