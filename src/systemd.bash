@@ -13,7 +13,7 @@ source $SCRIPT_DIR/_pre_install.bash
 
 # Setting packages
 declare packages
-packages="archlinux-keyring btrfs-progs efibootmgr iproute2 linux-firmware mkinitcpio nano pacman sed sudo systemd systemd-resolvconf"
+packages="archlinux-keyring btrfs-progs efibootmgr iproute2 iptables linux-firmware mkinitcpio nano pacman sed sudo systemd systemd-resolvconf"
 for kernel in $(echo "$kernel_choices" | xargs); do
     packages+=" $kernel $kernel-headers"
 done
@@ -26,7 +26,7 @@ arch-chroot /mnt systemctl enable serial-getty@ttyS0.service
 
 # Enabling DHCP
 echo "[Match]
-Name=enp* wlp*
+Name=en* wl*
 
 [Network]
 DHCP=yes
