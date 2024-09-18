@@ -13,7 +13,7 @@ source $SCRIPT_DIR/_pre_install.bash
 
 # Setting packages
 declare packages
-packages="archlinux-keyring btrfs-progs efibootmgr iproute2 iptables iputils linux-firmware mkinitcpio nano pacman sed sudo systemd systemd-resolvconf"
+packages="archlinux-keyring btrfs-progs efibootmgr iproute2 iptables-nft iputils linux-firmware mkinitcpio nano pacman sed sudo systemd systemd-resolvconf"
 for kernel in $(echo "$kernel_choices" | xargs); do
     packages+=" $kernel $kernel-headers"
 done
