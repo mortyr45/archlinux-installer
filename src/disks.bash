@@ -11,19 +11,19 @@ export WHIPTAIL_LIST_HEIGHT=10
 export WHIPTAIL_CANCEL_MESSAGE="Cancelled by the user."
 
 function prompt_partition_choice() {
-    set -euo pipefail
-    declare devices
-    devices=$(blkid --output device)
-    declare menuoptions=""
-    for device in $devices; do
-        menuoptions+=" $device $device OFF"
-    done
-    declare result
-    result=$(whiptail --notags --radiolist "$1" \
-        $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH $WHIPTAIL_LIST_HEIGHT \
-        $menuoptions \
-        3>&1 1>&2 2>&3)
-    echo "$result"
+  set -euo pipefail
+  declare devices
+  devices=$(blkid --output device)
+  declare menuoptions=""
+  for device in $devices; do
+    menuoptions+=" $device $device OFF"
+  done
+  declare result
+  result=$(whiptail --notags --radiolist "$1" \
+    $WHIPTAIL_HEIGHT $WHIPTAIL_WIDTH $WHIPTAIL_LIST_HEIGHT \
+    $menuoptions \
+    3>&1 1>&2 2>&3)
+  echo "$result"
 }
 
 declare efi_partition
@@ -42,9 +42,9 @@ $root_partition (btrfs$(test $luks_encryption == true && echo ', encrypted'))" $
 mkfs.fat -I -F 32 "$efi_partition"
 
 if $luks_encryption; then
-    cryptsetup luksFormat "$root_partition"
-    cryptsetup open "$root_partition" luks_root
-    root_partition="/dev/mapper/luks_root"
+  cryptsetup luksFormat "$root_partition"
+  cryptsetup open "$root_partition" luks_root
+  root_partition="/dev/mapper/luks_root"
 fi
 
 mkfs.btrfs -f "$root_partition"
