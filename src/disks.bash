@@ -26,6 +26,14 @@ function prompt_partition_choice() {
   echo "$result"
 }
 
+function mount_partitions() {
+  set -euo pipefail
+  mount $1 -o subvol=@ /mnt
+  mount --mkdir $1 -o subvol=@home /mnt/home
+  mount --mkdir $1 -o subvol=@var /mnt/var
+  mount --mkdir $2 /mnt/boot/efi
+}
+
 declare efi_partition
 efi_partition=$(prompt_partition_choice "EFI partition:")
 declare root_partition
@@ -54,8 +62,5 @@ btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@home
 btrfs subvolume create /mnt/@var
 umount /mnt
-mount "$root_partition" -o subvol=@ /mnt
-mount --mkdir "$root_partition" -o subvol=@home /mnt/home
-mount --mkdir "$root_partition" -o subvol=@var /mnt/var
 
-mount --mkdir "$efi_partition" /mnt/boot/efi
+mount_partitions "$root_partition" "$efi_partition"
